@@ -12,6 +12,7 @@ import 'package:wifi_iot/wifi_iot.dart';
 
 class WifiDataChannel extends DataChannel {
   WifiDataChannel(super.identifier);
+  Socket? client;
 
   @override
   Future<void> initReceiver(ChannelMetadata data) {
@@ -22,10 +23,30 @@ class WifiDataChannel extends DataChannel {
   @override
   Future<void> initSender(BootstrapChannel channel) async {
     await WiFiForIoTPlugin.setWiFiAPEnabled(true);
+
+    String address = (await WiFiForIoTPlugin.getIP())!;
+    String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
+    String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
+
     debugPrint("[WifiChannel] Sender successfully initialized.");
-    debugPrint("[WifiChannel]     IP: ${await WiFiForIoTPlugin.getIP()}");
-    debugPrint("[WifiChannel]     SSID: ${await WiFiForIoTPlugin.getWiFiAPSSID()}");
-    debugPrint("[WifiChannel]     Key: ${await WiFiForIoTPlugin.getWiFiAPPreSharedKey()}");
+    debugPrint("[WifiChannel]     IP: $address");
+    debugPrint("[WifiChannel]     SSID: $ssid}");
+    debugPrint("[WifiChannel]     Key: $key");
+
+    final server = await ServerSocket.bind(address, 8080);
+    server.listen((clientSocket) {
+      debugPrint('Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
+      client = clientSocket;
+    });
+
+    // Send socket information to client.
+    await channel.sendChannelMetadata(ChannelMetadata(super.identifier, address, ssid, key));
+
+    // Waiting for client connection.
+    while(client == null) {
+      debugPrint("[WifiChannel] Waiting for client to connect...");
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
   }
 
   @override
