@@ -30,7 +30,7 @@ class WifiDataChannel extends DataChannel {
 
     debugPrint("[WifiChannel] Sender successfully initialized.");
     debugPrint("[WifiChannel]     IP: $address");
-    debugPrint("[WifiChannel]     SSID: $ssid}");
+    debugPrint("[WifiChannel]     SSID: $ssid");
     debugPrint("[WifiChannel]     Key: $key");
 
     final server = await ServerSocket.bind(address, 8080);
