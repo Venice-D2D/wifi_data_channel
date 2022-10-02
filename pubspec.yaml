@@ -13,6 +13,7 @@ dependencies:
   channel_multiplexed_scheduler:
     path: ../channel_multiplexed_scheduler
   wifi_iot: ^0.3.17
+  wifi_scan: ^0.4.0+1
 
 dev_dependencies:
   flutter_test:
