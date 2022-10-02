@@ -8,6 +8,7 @@ import 'package:channel_multiplexed_scheduler/channels/channel_metadata.dart';
 import 'package:channel_multiplexed_scheduler/file/file_chunk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wifi_iot/wifi_iot.dart';
+import 'package:wifi_scan/wifi_scan.dart';
 
 
 class WifiDataChannel extends DataChannel {
@@ -15,8 +16,26 @@ class WifiDataChannel extends DataChannel {
   Socket? client;
 
   @override
-  Future<void> initReceiver(ChannelMetadata data) {
-    // TODO: implement initReceiver
+  Future<void> initReceiver(ChannelMetadata data) async {
+    debugPrint("GOT METADATA: $data");
+
+    // Enable Wi-Fi scanning.
+    await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    await WiFiScan.instance.startScan();
+
+    // Loop until we find matching AP.
+    WiFiAccessPoint? accessPoint;
+    while (accessPoint == null) {
+      List<WiFiAccessPoint> results = await WiFiScan.instance.getScannedResults();
+      Iterable<WiFiAccessPoint> matching = results.where((element) => element.ssid == data.apIdentifier);
+
+      if (matching.isNotEmpty) {
+        accessPoint = matching.first;
+      } else {
+        await Future.delayed(const Duration(seconds: 1));
+        debugPrint("No matching AP, rescanning...");
+      }
+    }
     throw UnimplementedError();
   }
 
