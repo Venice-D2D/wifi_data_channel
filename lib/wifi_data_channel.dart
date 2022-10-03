@@ -17,8 +17,6 @@ class WifiDataChannel extends DataChannel {
 
   @override
   Future<void> initReceiver(ChannelMetadata data) async {
-    debugPrint("GOT METADATA: $data");
-
     // Enable Wi-Fi scanning.
     await WiFiScan.instance.canGetScannedResults(askPermissions: true);
     await WiFiScan.instance.startScan();
@@ -33,14 +31,41 @@ class WifiDataChannel extends DataChannel {
         accessPoint = matching.first;
       } else {
         await Future.delayed(const Duration(seconds: 1));
-        debugPrint("No matching AP, rescanning...");
+        debugPrint("[WifiChannel] No matching AP, rescanning...");
       }
     }
+
+    // Connection to access point.
+    await WiFiForIoTPlugin.setEnabled(true, shouldOpenSettings: true);
+    bool connected = false;
+    while (!connected) {
+      debugPrint("[WifiChannel] Connecting to AP...");
+      connected = await WiFiForIoTPlugin.findAndConnect(data.apIdentifier, password: data.password);
+      await Future.delayed(const Duration(seconds: 1));
+    }
+    debugPrint("[WifiChannel] Connected to AP.");
+
+    // Opening data connection with host.
+    connected = false;
+    while (!connected) {
+      try {
+        final socket = await Socket.connect(data.address, 62526);
+        debugPrint('[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
+        connected = true;
+      } catch (err) {
+        debugPrint("[WifiChannel] Failed to connect to host, retrying...");
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+
     throw UnimplementedError();
   }
 
   @override
   Future<void> initSender(BootstrapChannel channel) async {
+    if (await WiFiForIoTPlugin.isEnabled()) {
+      await WiFiForIoTPlugin.disconnect();
+    }
     await WiFiForIoTPlugin.setWiFiAPEnabled(true);
 
     String address = (await WiFiForIoTPlugin.getIP())!;
@@ -52,9 +77,9 @@ class WifiDataChannel extends DataChannel {
     debugPrint("[WifiChannel]     SSID: $ssid");
     debugPrint("[WifiChannel]     Key: $key");
 
-    final server = await ServerSocket.bind(address, 8080);
+    final server = await ServerSocket.bind(address, 62526);
     server.listen((clientSocket) {
-      debugPrint('Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
+      debugPrint('[WifiChannel] Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
       client = clientSocket;
     });
 
