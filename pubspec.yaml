@@ -10,8 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  channel_multiplexed_scheduler:
-    path: ../channel_multiplexed_scheduler
+  venice_core:
+    path: ../venice_core
   wifi_iot: ^0.3.17
   wifi_scan: ^0.4.0+1
 

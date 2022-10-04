@@ -2,10 +2,10 @@ library wifi_data_channel;
 
 import 'dart:io';
 
-import 'package:channel_multiplexed_scheduler/channels/abstractions/bootstrap_channel.dart';
-import 'package:channel_multiplexed_scheduler/channels/abstractions/data_channel.dart';
-import 'package:channel_multiplexed_scheduler/channels/channel_metadata.dart';
-import 'package:channel_multiplexed_scheduler/file/file_chunk.dart';
+import 'package:venice_core/channels/abstractions/bootstrap_channel.dart';
+import 'package:venice_core/channels/abstractions/data_channel.dart';
+import 'package:venice_core/channels/channel_metadata.dart';
+import 'package:venice_core/file/file_chunk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
