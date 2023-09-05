@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
   venice_core:
     git: https://github.com/Venice-D2D/venice_core.git
-  wifi_iot: ^0.3.17
+  wifi_iot: ^0.3.18+1
   wifi_scan: ^0.4.0+1
 
 dev_dependencies:
