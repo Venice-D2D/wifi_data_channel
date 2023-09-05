@@ -66,11 +66,23 @@ class WifiDataChannel extends DataChannel {
     if (await WiFiForIoTPlugin.isEnabled()) {
       await WiFiForIoTPlugin.disconnect();
     }
-    await WiFiForIoTPlugin.setWiFiAPEnabled(true);
+    bool result = await WiFiForIoTPlugin.setWiFiAPEnabled(true);
+    debugPrint("WiFi AP activation successful: $result");
+    List<NetworkInterface> firstNetInterface = await NetworkInterface.list(includeLoopback: false, includeLinkLocal: false, type: InternetAddressType.IPv4);
 
     String address = (await WiFiForIoTPlugin.getIP())!;
     String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
     String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
+
+    // TODO check selected address is a local IP address
+    List<NetworkInterface> secondNetInterface = await NetworkInterface.list(includeLoopback: false, includeLinkLocal: false, type: InternetAddressType.IPv4);
+    List<NetworkInterface> myNetInterface = List<NetworkInterface>.empty(growable: true);
+    for (var element in firstNetInterface) {
+      if(!secondNetInterface.contains(element)){
+        myNetInterface.add(element);
+      }
+    }
+    address = myNetInterface.last.addresses[0].address;
 
     debugPrint("[WifiChannel] Sender successfully initialized.");
     debugPrint("[WifiChannel]     IP: $address");
