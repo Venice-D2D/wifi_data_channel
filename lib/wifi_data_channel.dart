@@ -18,12 +18,17 @@ class WifiDataChannel extends DataChannel {
   @override
   Future<void> initReceiver(ChannelMetadata data) async {
     // Enable Wi-Fi scanning.
-    await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    if ((await WiFiForIoTPlugin.isConnected()) == false) {
+      WiFiForIoTPlugin.setEnabled(true, shouldOpenSettings: true);
+    }
+    CanGetScannedResults check = await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    debugPrint("Can get AP scan results: ${check.name}");
     await WiFiScan.instance.startScan();
 
     // Loop until we find matching AP.
     WiFiAccessPoint? accessPoint;
     while (accessPoint == null) {
+      await WiFiScan.instance.startScan();
       List<WiFiAccessPoint> results = await WiFiScan.instance.getScannedResults();
       Iterable<WiFiAccessPoint> matching = results.where((element) => element.ssid == data.apIdentifier);
 
@@ -49,7 +54,8 @@ class WifiDataChannel extends DataChannel {
     connected = false;
     while (!connected) {
       try {
-        final socket = await Socket.connect(data.address, 62526);
+        debugPrint('[WifiChannel] Connecting to: ${data.address}:${62526}');
+        final socket = await Socket.connect(data.address, 62526, timeout: const Duration(seconds: 5));
         debugPrint('[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
         connected = true;
       } catch (err) {
