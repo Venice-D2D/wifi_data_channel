@@ -41,7 +41,7 @@ class WifiDataChannel extends DataChannel {
     }
 
     // Connection to access point.
-    await WiFiForIoTPlugin.setEnabled(true, shouldOpenSettings: true);
+    await WiFiForIoTPlugin.setEnabled(true);
     bool connected = false;
     while (!connected) {
       debugPrint("[WifiChannel] Connecting to AP...");
