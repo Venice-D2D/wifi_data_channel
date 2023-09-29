@@ -112,8 +112,7 @@ class WifiDataChannel extends DataChannel {
   }
 
   @override
-  Future<void> sendChunk(FileChunk chunk) {
-    // TODO: implement sendChunk
-    throw UnimplementedError();
+  Future<void> sendChunk(FileChunk chunk) async {
+    client!.write(chunk.data);
   }
 }
