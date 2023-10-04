@@ -126,6 +126,10 @@ class WifiDataChannel extends DataChannel {
   /// This will throw an error if the [oldInterfaces] argument is not provided
   /// and several private class IPs are present in [interfaces].
   InternetAddress retrieveHotspotIPAddress(List<NetworkInterface> interfaces, List<NetworkInterface>? oldInterfaces) {
+    if (interfaces.isEmpty) {
+      throw ArgumentError('Cannot retrieve hotspot address from an empty interfaces list.');
+    }
+
     // Retrieve all private addresses
     List<InternetAddress> privateAddresses = [];
     for (NetworkInterface ni in interfaces) {
