@@ -60,7 +60,7 @@ void main() {
 
       expect(() => canal.retrieveHotspotIPAddress([ni1, hotspot, ni2], oldInterfaces: [ni2]),
           throwsA(predicate((e) => e is StateError
-              && e.message == 'Could not retrieve hotspot IP address from provided information.')));
+              && e.message == "Several compatible private IP addresses appeared, cannot choose between them.\nPotential candidates: [InternetAddress('10.201.0.146', IPv4), InternetAddress('192.168.53.71', IPv4)]")));
     });
 
     test('should find the new address among private IPs', () {

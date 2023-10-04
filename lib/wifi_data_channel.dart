@@ -163,6 +163,8 @@ class WifiDataChannel extends DataChannel {
 
       if (matching.length == 1) {
         return matching.first;
+      } else {
+        throw StateError('Several compatible private IP addresses appeared, cannot choose between them.\nPotential candidates: $matching');
       }
     }
 
