@@ -51,5 +51,16 @@ void main() {
       InternetAddress result = canal.retrieveHotspotIPAddress([ni1, ni2], null);
       expect(result.address, hotspotAddress);
     });
+
+    test('should throw when several possible addresses appeared', () {
+      String hotspotAddress = '192.168.53.71';
+      NetworkInterface ni1 = TestNetworkInterface("wlan0", ['10.201.0.146']);
+      NetworkInterface ni2 = TestNetworkInterface("v4-rmnet_data2", ['192.0.0.4']);
+      NetworkInterface hotspot = TestNetworkInterface("wlan", [hotspotAddress]);
+
+      expect(() => canal.retrieveHotspotIPAddress([ni1, hotspot, ni2], [ni2]),
+          throwsA(predicate((e) => e is StateError
+              && e.message == 'Could not retrieve hotspot IP address from provided information.')));
+    });
   });
 }
