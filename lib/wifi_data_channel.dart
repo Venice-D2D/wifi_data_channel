@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 
-
 class WifiDataChannel extends DataChannel {
   WifiDataChannel(super.identifier);
   final int port = 62526;
@@ -22,7 +21,8 @@ class WifiDataChannel extends DataChannel {
     if ((await WiFiForIoTPlugin.isConnected()) == false) {
       WiFiForIoTPlugin.setEnabled(true, shouldOpenSettings: true);
     }
-    CanGetScannedResults check = await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    CanGetScannedResults check =
+        await WiFiScan.instance.canGetScannedResults(askPermissions: true);
     debugPrint("Can get AP scan results: ${check.name}");
     await WiFiScan.instance.startScan();
 
@@ -30,8 +30,10 @@ class WifiDataChannel extends DataChannel {
     WiFiAccessPoint? accessPoint;
     while (accessPoint == null) {
       await WiFiScan.instance.startScan();
-      List<WiFiAccessPoint> results = await WiFiScan.instance.getScannedResults();
-      Iterable<WiFiAccessPoint> matching = results.where((element) => element.ssid == data.apIdentifier);
+      List<WiFiAccessPoint> results =
+          await WiFiScan.instance.getScannedResults();
+      Iterable<WiFiAccessPoint> matching =
+          results.where((element) => element.ssid == data.apIdentifier);
 
       if (matching.isNotEmpty) {
         accessPoint = matching.first;
@@ -46,7 +48,8 @@ class WifiDataChannel extends DataChannel {
     bool connected = false;
     while (!connected) {
       debugPrint("[WifiChannel] Connecting to AP...");
-      connected = await WiFiForIoTPlugin.findAndConnect(data.apIdentifier, password: data.password);
+      connected = await WiFiForIoTPlugin.findAndConnect(data.apIdentifier,
+          password: data.password);
       await Future.delayed(const Duration(seconds: 1));
     }
     debugPrint("[WifiChannel] Connected to AP.");
@@ -56,8 +59,10 @@ class WifiDataChannel extends DataChannel {
     while (!connected) {
       try {
         debugPrint('[WifiChannel] Connecting to: ${data.address}:$port');
-        final socket = await Socket.connect(data.address, port, timeout: const Duration(seconds: 5));
-        debugPrint('[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
+        final socket = await Socket.connect(data.address, port,
+            timeout: const Duration(seconds: 5));
+        debugPrint(
+            '[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
         connected = true;
       } catch (err) {
         debugPrint("[WifiChannel] Failed to connect to host, retrying...");
@@ -75,17 +80,24 @@ class WifiDataChannel extends DataChannel {
     }
     bool result = await WiFiForIoTPlugin.setWiFiAPEnabled(true);
     debugPrint("WiFi AP activation successful: $result");
-    List<NetworkInterface> firstNetInterface = await NetworkInterface.list(includeLoopback: false, includeLinkLocal: false, type: InternetAddressType.IPv4);
+    List<NetworkInterface> firstNetInterface = await NetworkInterface.list(
+        includeLoopback: false,
+        includeLinkLocal: false,
+        type: InternetAddressType.IPv4);
 
     String address = (await WiFiForIoTPlugin.getIP())!;
     String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
     String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
 
     // TODO check selected address is a local IP address
-    List<NetworkInterface> secondNetInterface = await NetworkInterface.list(includeLoopback: false, includeLinkLocal: false, type: InternetAddressType.IPv4);
-    List<NetworkInterface> myNetInterface = List<NetworkInterface>.empty(growable: true);
+    List<NetworkInterface> secondNetInterface = await NetworkInterface.list(
+        includeLoopback: false,
+        includeLinkLocal: false,
+        type: InternetAddressType.IPv4);
+    List<NetworkInterface> myNetInterface =
+        List<NetworkInterface>.empty(growable: true);
     for (var element in firstNetInterface) {
-      if(!secondNetInterface.contains(element)){
+      if (!secondNetInterface.contains(element)) {
         myNetInterface.add(element);
       }
     }
@@ -98,15 +110,17 @@ class WifiDataChannel extends DataChannel {
 
     final server = await ServerSocket.bind(address, port);
     server.listen((clientSocket) {
-      debugPrint('[WifiChannel] Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
+      debugPrint(
+          '[WifiChannel] Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
       client = clientSocket;
     });
 
     // Send socket information to client.
-    await channel.sendChannelMetadata(ChannelMetadata(super.identifier, address, ssid, key));
+    await channel.sendChannelMetadata(
+        ChannelMetadata(super.identifier, address, ssid, key));
 
     // Waiting for client connection.
-    while(client == null) {
+    while (client == null) {
       debugPrint("[WifiChannel] Waiting for client to connect...");
       await Future.delayed(const Duration(milliseconds: 500));
     }
@@ -125,9 +139,11 @@ class WifiDataChannel extends DataChannel {
   ///
   /// This will throw an error if the [oldInterfaces] argument is not provided
   /// and several private class IPs are present in [interfaces].
-  InternetAddress retrieveHotspotIPAddress(List<NetworkInterface> interfaces, {List<NetworkInterface>? oldInterfaces}) {
+  InternetAddress retrieveHotspotIPAddress(List<NetworkInterface> interfaces,
+      {List<NetworkInterface>? oldInterfaces}) {
     if (interfaces.isEmpty) {
-      throw ArgumentError('Cannot retrieve hotspot address from an empty interfaces list.');
+      throw ArgumentError(
+          'Cannot retrieve hotspot address from an empty interfaces list.');
     }
 
     // Retrieve all private addresses
@@ -152,9 +168,13 @@ class WifiDataChannel extends DataChannel {
     if (privateAddresses.length == 1) {
       return privateAddresses.first;
     }
-    // TODO throw if there are no private addresses
+    // Throw if there are no private addresses
+    if (privateAddresses.isEmpty) {
+      throw StateError('No private address was found.');
+    }
 
-    // Use [oldInterfaces] if provided
+    // If there are several private interfaces, we need to use [oldInterfaces]
+    // list to find out which one appeared when the hotspot was turned on.
     if (oldInterfaces != null) {
       List<InternetAddress> matching = privateAddresses.where((address) {
         return oldInterfaces.where((interface) {
@@ -165,10 +185,12 @@ class WifiDataChannel extends DataChannel {
       if (matching.length == 1) {
         return matching.first;
       } else {
-        throw StateError('Several compatible private IP addresses appeared, cannot choose between them.\nPotential candidates: $matching');
+        throw StateError(
+            'Several compatible private IP addresses appeared, cannot choose between them.\nPotential candidates: $matching');
       }
     }
 
-    throw StateError("Could not retrieve hotspot IP address from provided information.");
+    throw StateError(
+        "Could not retrieve hotspot IP address from provided information.");
   }
 }
