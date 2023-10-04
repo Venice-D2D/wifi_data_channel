@@ -97,5 +97,17 @@ void main() {
               e.message ==
                   'Cannot retrieve hotspot address from an empty interfaces list.')));
     });
+
+    test('should throw if there are no private addresses', () {
+      NetworkInterface ni1 = TestNetworkInterface("ni1", ['95.190.52.35']);
+      NetworkInterface ni2 = TestNetworkInterface("ni2", ['142.42.42.42']);
+      NetworkInterface ni3 = TestNetworkInterface("ni3", ['192.169.0.0']);
+      expect(
+          () => canal.retrieveHotspotIPAddress([ni1, ni2, ni3],
+              oldInterfaces: [ni1, ni2]),
+          throwsA(predicate((e) =>
+              e is StateError &&
+              e.message == 'No private address was found.')));
+    });
   });
 }
