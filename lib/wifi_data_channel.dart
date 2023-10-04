@@ -152,6 +152,7 @@ class WifiDataChannel extends DataChannel {
     if (privateAddresses.length == 1) {
       return privateAddresses.first;
     }
+    // TODO throw if there are no private addresses
 
     // Use [oldInterfaces] if provided
     if (oldInterfaces != null) {
