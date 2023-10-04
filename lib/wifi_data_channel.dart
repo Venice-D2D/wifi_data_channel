@@ -13,6 +13,7 @@ import 'package:wifi_scan/wifi_scan.dart';
 
 class WifiDataChannel extends DataChannel {
   WifiDataChannel(super.identifier);
+  final int port = 62526;
   Socket? client;
 
   @override
@@ -54,8 +55,8 @@ class WifiDataChannel extends DataChannel {
     connected = false;
     while (!connected) {
       try {
-        debugPrint('[WifiChannel] Connecting to: ${data.address}:${62526}');
-        final socket = await Socket.connect(data.address, 62526, timeout: const Duration(seconds: 5));
+        debugPrint('[WifiChannel] Connecting to: ${data.address}:$port');
+        final socket = await Socket.connect(data.address, port, timeout: const Duration(seconds: 5));
         debugPrint('[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
         connected = true;
       } catch (err) {
@@ -95,7 +96,7 @@ class WifiDataChannel extends DataChannel {
     debugPrint("[WifiChannel]     SSID: $ssid");
     debugPrint("[WifiChannel]     Key: $key");
 
-    final server = await ServerSocket.bind(address, 62526);
+    final server = await ServerSocket.bind(address, port);
     server.listen((clientSocket) {
       debugPrint('[WifiChannel] Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
       client = clientSocket;
