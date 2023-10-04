@@ -126,6 +126,42 @@ class WifiDataChannel extends DataChannel {
   /// This will throw an error if the [oldInterfaces] argument is not provided
   /// and several private class IPs are present in [interfaces].
   InternetAddress retrieveHotspotIPAddress(List<NetworkInterface> interfaces, List<NetworkInterface>? oldInterfaces) {
-    throw UnimplementedError();
+    // Retrieve all private addresses
+    List<InternetAddress> privateAddresses = [];
+    for (NetworkInterface ni in interfaces) {
+      privateAddresses.addAll(ni.addresses.where((address) {
+        List<String> words = address.address.split(".");
+
+        // Class A
+        if (words[0] == "10") return true;
+        // Class B
+        int second = int.parse(words[1]);
+        if (words[0] == "172" && second >= 16 && second <= 31) return true;
+        // Class C
+        if (words[0] == "192" && words[1] == "168") return true;
+
+        return false;
+      }).toList());
+    }
+
+    // If there's only one private address, return it
+    if (privateAddresses.length == 1) {
+      return privateAddresses.first;
+    }
+
+    // Use [oldInterfaces] if provided
+    if (oldInterfaces != null) {
+      List<InternetAddress> matching = privateAddresses.where((address) {
+        return oldInterfaces.where((interface) {
+          return interface.addresses.contains(address);
+        }).isEmpty;
+      }).toList();
+
+      if (matching.length == 1) {
+        return matching.first;
+      }
+    }
+
+    throw StateError("Could not retrieve hotspot IP address from provided information.");
   }
 }
