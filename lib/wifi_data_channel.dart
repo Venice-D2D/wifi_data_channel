@@ -116,4 +116,16 @@ class WifiDataChannel extends DataChannel {
   Future<void> sendChunk(FileChunk chunk) async {
     client!.write(chunk.data);
   }
+
+  /// Returns the Wi-Fi hotspot IP address of the current device.
+  ///
+  /// This methods accepts a [oldInterfaces] list of interfaces that was saved
+  /// in memory *before* turning the Wi-Fi hotspot on, supposedly helping in
+  /// finding the newly created network interface.
+  ///
+  /// This will throw an error if the [oldInterfaces] argument is not provided
+  /// and several private class IPs are present in [interfaces].
+  InternetAddress retrieveHotspotIPAddress(List<NetworkInterface> interfaces, List<NetworkInterface>? oldInterfaces) {
+    throw UnimplementedError();
+  }
 }
