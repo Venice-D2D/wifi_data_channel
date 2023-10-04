@@ -42,5 +42,14 @@ void main() {
           throwsA(predicate((e) => e is StateError
               && e.message == 'Could not retrieve hotspot IP address from provided information.')));
     });
+
+    test('should return single private address', () {
+      String hotspotAddress = '10.201.0.146';
+      NetworkInterface ni1 = TestNetworkInterface("wlan0", [hotspotAddress]);
+      NetworkInterface ni2 = TestNetworkInterface("v4-rmnet_data2", ['192.0.0.4']);
+
+      InternetAddress result = canal.retrieveHotspotIPAddress([ni1, ni2], null);
+      expect(result.address, hotspotAddress);
+    });
   });
 }
