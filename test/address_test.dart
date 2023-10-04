@@ -62,5 +62,21 @@ void main() {
           throwsA(predicate((e) => e is StateError
               && e.message == 'Could not retrieve hotspot IP address from provided information.')));
     });
+
+    test('should find the new address among private IPs', () {
+      String hotspotAddress = '10.201.0.146';
+      NetworkInterface ni1 = TestNetworkInterface("wlan0", [hotspotAddress]);
+      NetworkInterface ni2 = TestNetworkInterface("v4-rmnet_data2", ['172.18.42.15']);
+      NetworkInterface ni3 = TestNetworkInterface("test-interface", ['192.168.1.15']);
+
+      InternetAddress result = canal.retrieveHotspotIPAddress([ni1, ni2, ni3], [ni2, ni3]);
+      expect(result.address, hotspotAddress);
+    });
+
+    test('should throw when given an empty interfaces list', () {
+      expect(() => canal.retrieveHotspotIPAddress([], null),
+          throwsA(predicate((e) => e is ArgumentError
+              && e.message == 'Cannot retrieve hotspot address from an empty interfaces list.')));
+    });
   });
 }
