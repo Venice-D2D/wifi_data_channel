@@ -49,7 +49,7 @@ class WifiDataChannel extends DataChannel {
     while (!connected) {
       debugPrint("[WifiChannel] Connecting to AP...");
       connected = await WiFiForIoTPlugin.findAndConnect(data.apIdentifier,
-          password: data.password);
+          password: data.password, withInternet: true);
       await Future.delayed(const Duration(seconds: 1));
     }
     debugPrint("[WifiChannel] Connected to AP.");
