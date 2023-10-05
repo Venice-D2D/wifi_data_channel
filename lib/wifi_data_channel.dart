@@ -179,6 +179,14 @@ class WifiDataChannel extends DataChannel {
           'Cannot retrieve hotspot address from an empty interfaces list.');
     }
 
+    // Debug log
+    debugPrint("Input interfaces: $interfaces");
+    if (oldInterfaces != null) {
+      debugPrint("Input old interfaces: $oldInterfaces");
+    } else {
+      debugPrint("No old interfaces provided.");
+    }
+
     // Retrieve all private addresses
     List<InternetAddress> privateAddresses = [];
     for (NetworkInterface ni in interfaces) {
