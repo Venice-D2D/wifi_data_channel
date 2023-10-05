@@ -194,4 +194,11 @@ class WifiDataChannel extends DataChannel {
     throw StateError(
         "Could not retrieve hotspot IP address from provided information.");
   }
+
+  @override
+  Future<void> close() async {
+    if (client != null) {
+      client!.close();
+    }
+  }
 }
