@@ -78,19 +78,43 @@ class WifiDataChannel extends DataChannel {
     if (await WiFiForIoTPlugin.isEnabled()) {
       await WiFiForIoTPlugin.disconnect();
     }
+
+    List<NetworkInterface> interfacesBeforeActivation =
+        await NetworkInterface.list(
+            includeLoopback: false,
+            includeLinkLocal: false,
+            type: InternetAddressType.IPv4);
+
     bool result = await WiFiForIoTPlugin.setWiFiAPEnabled(true);
     debugPrint("WiFi AP activation successful: $result");
+
+    /*
     List<NetworkInterface> firstNetInterface = await NetworkInterface.list(
         includeLoopback: false,
         includeLinkLocal: false,
         type: InternetAddressType.IPv4);
 
-    String address = (await WiFiForIoTPlugin.getIP())!;
+    for (NetworkInterface interface in firstNetInterface) {
+      debugPrint("==> ${interface.name}");
+      // debugPrint("===> ${interface.addresses}");
+      for (InternetAddress addr in interface.addresses) {
+        debugPrint("===> ${addr.address}");
+      }
+    }*/
+
+    List<NetworkInterface> interfaces = await NetworkInterface.list(
+        includeLoopback: false,
+        includeLinkLocal: false,
+        type: InternetAddressType.IPv4);
+    InternetAddress address = retrieveHotspotIPAddress(interfaces,
+        oldInterfaces: interfacesBeforeActivation);
+
+    // String address = (await WiFiForIoTPlugin.getIP())!;
     String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
     String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
 
     // TODO check selected address is a local IP address
-    List<NetworkInterface> secondNetInterface = await NetworkInterface.list(
+    /*List<NetworkInterface> secondNetInterface = await NetworkInterface.list(
         includeLoopback: false,
         includeLinkLocal: false,
         type: InternetAddressType.IPv4);
@@ -103,8 +127,17 @@ class WifiDataChannel extends DataChannel {
     }
     address = myNetInterface.last.addresses[0].address;
 
+    debugPrint("=============");
+    for (NetworkInterface interface in secondNetInterface) {
+      debugPrint("==> ${interface.name}");
+      // debugPrint("===> ${interface.addresses}");
+      for (InternetAddress addr in interface.addresses) {
+        debugPrint("===> ${addr.address}");
+      }
+    }*/
+
     debugPrint("[WifiChannel] Sender successfully initialized.");
-    debugPrint("[WifiChannel]     IP: $address");
+    debugPrint("[WifiChannel]     IP: ${address.address}");
     debugPrint("[WifiChannel]     SSID: $ssid");
     debugPrint("[WifiChannel]     Key: $key");
 
@@ -117,7 +150,7 @@ class WifiDataChannel extends DataChannel {
 
     // Send socket information to client.
     await channel.sendChannelMetadata(
-        ChannelMetadata(super.identifier, address, ssid, key));
+        ChannelMetadata(super.identifier, address.address, ssid, key));
 
     // Waiting for client connection.
     while (client == null) {
