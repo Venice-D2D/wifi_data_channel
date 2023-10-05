@@ -69,8 +69,6 @@ class WifiDataChannel extends DataChannel {
         await Future.delayed(const Duration(seconds: 1));
       }
     }
-
-    throw UnimplementedError();
   }
 
   @override
