@@ -88,53 +88,15 @@ class WifiDataChannel extends DataChannel {
     bool result = await WiFiForIoTPlugin.setWiFiAPEnabled(true);
     debugPrint("WiFi AP activation successful: $result");
 
-    /*
-    List<NetworkInterface> firstNetInterface = await NetworkInterface.list(
-        includeLoopback: false,
-        includeLinkLocal: false,
-        type: InternetAddressType.IPv4);
-
-    for (NetworkInterface interface in firstNetInterface) {
-      debugPrint("==> ${interface.name}");
-      // debugPrint("===> ${interface.addresses}");
-      for (InternetAddress addr in interface.addresses) {
-        debugPrint("===> ${addr.address}");
-      }
-    }*/
-
     List<NetworkInterface> interfaces = await NetworkInterface.list(
         includeLoopback: false,
         includeLinkLocal: false,
         type: InternetAddressType.IPv4);
+
     InternetAddress address = retrieveHotspotIPAddress(interfaces,
         oldInterfaces: interfacesBeforeActivation);
-
-    // String address = (await WiFiForIoTPlugin.getIP())!;
     String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
     String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
-
-    // TODO check selected address is a local IP address
-    /*List<NetworkInterface> secondNetInterface = await NetworkInterface.list(
-        includeLoopback: false,
-        includeLinkLocal: false,
-        type: InternetAddressType.IPv4);
-    List<NetworkInterface> myNetInterface =
-        List<NetworkInterface>.empty(growable: true);
-    for (var element in firstNetInterface) {
-      if (!secondNetInterface.contains(element)) {
-        myNetInterface.add(element);
-      }
-    }
-    address = myNetInterface.last.addresses[0].address;
-
-    debugPrint("=============");
-    for (NetworkInterface interface in secondNetInterface) {
-      debugPrint("==> ${interface.name}");
-      // debugPrint("===> ${interface.addresses}");
-      for (InternetAddress addr in interface.addresses) {
-        debugPrint("===> ${addr.address}");
-      }
-    }*/
 
     debugPrint("[WifiChannel] Sender successfully initialized.");
     debugPrint("[WifiChannel]     IP: ${address.address}");
