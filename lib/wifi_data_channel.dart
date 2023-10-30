@@ -63,12 +63,18 @@ class WifiDataChannel extends DataChannel {
             timeout: const Duration(seconds: 5));
         debugPrint(
             '[WifiChannel] Client is connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
+        client = socket;
         connected = true;
       } catch (err) {
         debugPrint("[WifiChannel] Failed to connect to host, retrying...");
         await Future.delayed(const Duration(seconds: 1));
       }
     }
+
+    // Reception listener
+    client!.listen((event) {
+      debugPrint("RECEIVED SOMETHING BOSS");
+    });
   }
 
   @override
