@@ -72,11 +72,15 @@ class WifiDataChannel extends DataChannel {
     }
 
     // Reception listener
+    int receivedBytesCount = 0;
     client!.listen((event) {
       if (event == RawSocketEvent.read) {
         Uint8List? bytes = client!.read();
         if (bytes != null) {
-          debugPrint(bytes.toString());
+          receivedBytesCount += bytes.length;
+          if (receivedBytesCount == 100000) {
+            debugPrint("Complete chunk received.");
+          }
         }
       }
     });
