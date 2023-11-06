@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:venice_core/channels/abstractions/bootstrap_channel.dart';
 import 'package:venice_core/channels/abstractions/data_channel.dart';
 import 'package:venice_core/channels/channel_metadata.dart';
+import 'package:venice_core/channels/events/data_channel_event.dart';
 import 'package:venice_core/file/file_chunk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wifi_iot/wifi_iot.dart';
@@ -72,6 +73,7 @@ class WifiDataChannel extends DataChannel {
     }
 
     // Reception listener
+    /// TODO since this doesn't take chunk size into account, last chunk (probably smaller than 100k) will never be received
     int receivedBytesCount = 0;
     client!.listen((event) {
       if (event == RawSocketEvent.read) {
@@ -80,11 +82,15 @@ class WifiDataChannel extends DataChannel {
           receivedBytesCount += bytes.length;
           if (receivedBytesCount == 100000) {
             debugPrint("Complete chunk received.");
+            client!.write("ok".codeUnits);
+            receivedBytesCount = 0;
           }
         }
       }
     });
   }
+
+  bool ack = false;
 
   @override
   Future<void> initSender(BootstrapChannel channel) async {
@@ -132,11 +138,27 @@ class WifiDataChannel extends DataChannel {
       debugPrint("[WifiChannel] Waiting for client to connect...");
       await Future.delayed(const Duration(milliseconds: 500));
     }
+
+    // Listen for acknowledgements
+    client!.listen((event) {
+      debugPrint(event.toString());
+      if (event == RawSocketEvent.read) {
+        Uint8List? bytes = client!.read();
+        if (bytes != null) {
+          ack = true;
+        }
+      }
+    });
   }
 
   @override
   Future<void> sendChunk(FileChunk chunk) async {
     client!.write(chunk.data);
+    while (!ack) {
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+    ack = false;
+    on(DataChannelEvent.acknowledgment, chunk.identifier);
   }
 
   /// Returns the Wi-Fi hotspot IP address of the current device.
