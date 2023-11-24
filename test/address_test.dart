@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wifi_data_channel/access_point_utils.dart';
 import 'package:wifi_data_channel/wifi_data_channel.dart';
 
 class TestNetworkInterface extends NetworkInterface {
