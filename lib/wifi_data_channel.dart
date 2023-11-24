@@ -87,10 +87,11 @@ class WifiDataChannel extends DataChannel {
             msg = VeniceMessage.fromBytes(builder.toBytes());
             int msgId = msg.messageId;
             debugPrint("==> MESSAGE #$msgId COMPLETE");
+            on(DataChannelEvent.data, msg);
             builder.clear();
             client!.write(VeniceMessage.acknowledgement(msgId).toBytes());
           } catch (e) {
-            debugPrint("==> MESSAGE NOT COMPLETE, WAITING FOR NEXT DATA");
+            // debugPrint("==> MESSAGE NOT COMPLETE, WAITING FOR NEXT DATA");
           }
         }
       }
