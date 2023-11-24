@@ -4,10 +4,10 @@ import 'dart:io';
 
 import 'package:venice_core/channels/abstractions/bootstrap_channel.dart';
 import 'package:venice_core/channels/abstractions/data_channel.dart';
-import 'package:venice_core/channels/channel_metadata.dart';
+import 'package:venice_core/metadata/channel_metadata.dart';
 import 'package:venice_core/channels/events/data_channel_event.dart';
-import 'package:venice_core/file/file_chunk.dart';
 import 'package:flutter/foundation.dart';
+import 'package:venice_core/network/message.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 
@@ -81,7 +81,7 @@ class WifiDataChannel extends DataChannel {
         if (bytes != null) {
           receivedBytesCount += bytes.length;
           if (receivedBytesCount == 100000) {
-            debugPrint("Complete chunk received.");
+            debugPrint("Complete message received.");
             client!.write("ok".codeUnits);
             receivedBytesCount = 0;
           }
@@ -152,13 +152,13 @@ class WifiDataChannel extends DataChannel {
   }
 
   @override
-  Future<void> sendChunk(FileChunk chunk) async {
+  Future<void> sendMessage(VeniceMessage chunk) async {
     client!.write(chunk.data);
     while (!ack) {
       await Future.delayed(const Duration(milliseconds: 500));
     }
     ack = false;
-    on(DataChannelEvent.acknowledgment, chunk.identifier);
+    on(DataChannelEvent.acknowledgment, chunk.messageId);
   }
 
   /// Returns the Wi-Fi hotspot IP address of the current device.
