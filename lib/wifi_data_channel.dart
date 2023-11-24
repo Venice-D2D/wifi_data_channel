@@ -98,8 +98,6 @@ class WifiDataChannel extends DataChannel {
     });
   }
 
-  bool ack = false;
-
   @override
   Future<void> initSender(BootstrapChannel channel) async {
     if (await WiFiForIoTPlugin.isEnabled()) {
@@ -154,8 +152,7 @@ class WifiDataChannel extends DataChannel {
         Uint8List? bytes = client!.read();
         if (bytes != null) {
           VeniceMessage ackMsg = VeniceMessage.fromBytes(bytes);
-          debugPrint("==> RECEIVED ACK FOR MESSAGE n°${ackMsg.messageId}");
-          ack = true;
+          on(DataChannelEvent.acknowledgment, ackMsg.messageId);
         }
       }
     });
@@ -164,11 +161,6 @@ class WifiDataChannel extends DataChannel {
   @override
   Future<void> sendMessage(VeniceMessage chunk) async {
     client!.write(chunk.toBytes());
-    while (!ack) {
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
-    ack = false;
-    on(DataChannelEvent.acknowledgment, chunk.messageId);
   }
 
   /// Returns the Wi-Fi hotspot IP address of the current device.
