@@ -86,7 +86,9 @@ class WifiDataChannel extends DataChannel {
           try {
             msg = VeniceMessage.fromBytes(builder.toBytes());
             int msgId = msg.messageId;
-            debugPrint("==> COMPLETE MESSAGE: $msgId");
+            debugPrint("==> MESSAGE #$msgId COMPLETE");
+            builder.clear();
+            client!.write(VeniceMessage.acknowledgement(msgId).toBytes());
           } catch (e) {
             debugPrint("==> MESSAGE NOT COMPLETE, WAITING FOR NEXT DATA");
           }
@@ -150,6 +152,8 @@ class WifiDataChannel extends DataChannel {
       if (event == RawSocketEvent.read) {
         Uint8List? bytes = client!.read();
         if (bytes != null) {
+          VeniceMessage ackMsg = VeniceMessage.fromBytes(bytes);
+          debugPrint("==> RECEIVED ACK FOR MESSAGE n°${ackMsg.messageId}");
           ack = true;
         }
       }
