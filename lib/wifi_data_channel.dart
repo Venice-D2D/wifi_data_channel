@@ -73,17 +73,22 @@ class WifiDataChannel extends DataChannel {
     }
 
     // Reception listener
-    /// TODO since this doesn't take chunk size into account, last chunk (probably smaller than 100k) will never be received
-    int receivedBytesCount = 0;
+    BytesBuilder builder = BytesBuilder();
+
     client!.listen((event) {
       if (event == RawSocketEvent.read) {
         Uint8List? bytes = client!.read();
         if (bytes != null) {
-          receivedBytesCount += bytes.length;
-          if (receivedBytesCount == 100000) {
-            debugPrint("Complete message received.");
-            client!.write("ok".codeUnits);
-            receivedBytesCount = 0;
+          builder.add(bytes);
+
+          // Expecting errors here
+          VeniceMessage msg;
+          try {
+            msg = VeniceMessage.fromBytes(builder.toBytes());
+            int msgId = msg.messageId;
+            debugPrint("==> COMPLETE MESSAGE: $msgId");
+          } catch (e) {
+            debugPrint("==> MESSAGE NOT COMPLETE, WAITING FOR NEXT DATA");
           }
         }
       }
@@ -153,7 +158,7 @@ class WifiDataChannel extends DataChannel {
 
   @override
   Future<void> sendMessage(VeniceMessage chunk) async {
-    client!.write(chunk.data);
+    client!.write(chunk.toBytes());
     while (!ack) {
       await Future.delayed(const Duration(milliseconds: 500));
     }
