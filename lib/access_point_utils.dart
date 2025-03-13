@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:venice_core/channels/abstractions/data_channel.dart';
 import 'package:wifi_data_channel/wifi_data_channel.dart';
 
-extension AccessPointUtils on WifiDataChannel {
+extension AccessPointUtils on DataChannel {
   /// Returns the Wi-Fi hotspot IP address of the current device.
   ///
   /// This methods accepts a [oldInterfaces] list of interfaces that was saved
