@@ -13,13 +13,13 @@ dependencies:
     sdk: flutter
   venice_core:
     git: https://github.com/Venice-D2D/venice_core.git
-  wifi_iot: ^0.3.18+1
-  wifi_scan: ^0.4.0+1
+  wifi_iot: ^0.3.19+2
+  wifi_scan: ^0.4.1+2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
