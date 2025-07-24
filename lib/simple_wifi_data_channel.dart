@@ -1,7 +1,6 @@
 library wifi_data_channel;
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
@@ -12,14 +11,11 @@ import 'package:venice_core/channels/events/data_channel_event.dart';
 import 'package:flutter/foundation.dart';
 import 'package:venice_core/network/message.dart';
 import 'package:venice_core/protobuf/venice.pb.dart';
-import 'package:wifi_data_channel/access_point_utils.dart';
 import 'package:wifi_data_channel/exception/wifi_connection_exception.dart';
 import 'package:wifi_iot/wifi_iot.dart';
-import 'package:wifi_scan/wifi_scan.dart';
 
 import 'exception/wrong_wifi_connection_exception.dart';
 
-//import 'protobuf/venice.pb.dart';
 
 
 class SimpleWifiDataChannel extends DataChannel {
@@ -90,7 +86,6 @@ class SimpleWifiDataChannel extends DataChannel {
 
       if(!useProtoBuf) {
         final jsonString = String.fromCharCodes(data); // Decode bytes to string
-        //final jsonData = jsonDecode(jsonString); // Convert string to JSON
         debugPrint("==> MESSAGE RECEIVED $jsonString");
         msg = VeniceMessage.fromJson(jsonString);
       }
@@ -99,15 +94,11 @@ class SimpleWifiDataChannel extends DataChannel {
         msg = VeniceMessage.fromProtoBuf(msgProto);
       }
 
-
-
       try {
         int msgId = msg.messageId;
         debugPrint("==> MESSAGE #$msgId COMPLETE");
         on(DataChannelEvent.data, msg);
-        //builder.clear();
         debugPrint("==> Sending acknowledgement");
-        //client!.write("TOTOTOTOTOTOTO");
         client!.write(VeniceMessage.acknowledgement(msgId).toJson());
         await client!.flush();
         debugPrint("==> Acknowledgement sent");
@@ -119,59 +110,80 @@ class SimpleWifiDataChannel extends DataChannel {
 
   @override
   Future<void> initSender(BootstrapChannel channel) async {
-    if (await WiFiForIoTPlugin.isEnabled()) {
-      await WiFiForIoTPlugin.disconnect();
-    }
+    if (await WiFiForIoTPlugin.isConnected()) {
+      //await WiFiForIoTPlugin.isdisconnect();
+      //}
 
-    List<NetworkInterface> interfacesBeforeActivation =
+      /*List<NetworkInterface> interfacesBeforeActivation =
     await NetworkInterface.list(
         includeLoopback: false,
         includeLinkLocal: false,
-        type: InternetAddressType.IPv4);
+        type: InternetAddressType.IPv4);*/
 
-    bool result = await WiFiForIoTPlugin.setWiFiAPEnabled(true);
-    debugPrint("WiFi AP activation successful: $result");
+      /*bool result = await WiFForIoTPlugin.setWiFiAPEnabled(true);
+      debugPrint("WiFi AP activation successful: $result");*/
+      InternetAddress? address;
+      String ssid = (await WiFiForIoTPlugin.getSSID())!;
+      String ip = (await WiFiForIoTPlugin.getIP())!;
 
-    List<NetworkInterface> interfaces = await NetworkInterface.list(
-        includeLoopback: false,
-        includeLinkLocal: false,
-        type: InternetAddressType.IPv4);
+      List<NetworkInterface> interfaces = await NetworkInterface.list(
+          includeLoopback: false,
+          includeLinkLocal: false,
+          type: InternetAddressType.IPv4);
 
-    InternetAddress address = retrieveHotspotIPAddress(interfaces,
-        oldInterfaces: interfacesBeforeActivation);
-    String ssid = (await WiFiForIoTPlugin.getWiFiAPSSID())!;
-    String key = (await WiFiForIoTPlugin.getWiFiAPPreSharedKey())!;
+      for (var interface in interfaces) {
+        for (var current_address in interface.addresses) {
+          if (current_address.address == ip) {
+            address = current_address;
+            break;
+          }
+        }
+      }
 
-    debugPrint("[WifiChannel] Sender successfully initialized.");
-    debugPrint("[WifiChannel]     IP: ${address.address}");
-    debugPrint("[WifiChannel]     SSID: $ssid");
-    debugPrint("[WifiChannel]     Key: $key");
+      if (address == null)
+        throw WifiConnectionException(
+            'You need to be connected to a Wifi Network');
 
-    final server = await ServerSocket.bind(address, port);
-    server.listen((clientSocket) {
-      debugPrint(
-          '[WifiChannel] Connection from ${clientSocket.remoteAddress.address}:${clientSocket.remotePort}');
-      client = clientSocket;
-    });
+      debugPrint("[SimpleWifiChannel] Sender successfully initialized.");
+      debugPrint("[SimpleWifiChannel]     IP: $ip");
+      debugPrint("[SimpleWifiChannel]     SSID: $ssid");
 
-    // Send socket information to client.
-    await channel.sendChannelMetadata(
-        ChannelMetadata(super.identifier, address.address, ssid, '' , port));
+      final server = await ServerSocket.bind(address, port);
+      server.listen((clientSocket) {
+        debugPrint(
+            '[SimpleWifiChannel] Connection from ${clientSocket.remoteAddress
+                .address}:${clientSocket.remotePort}');
+        client = clientSocket;
+      });
 
-    // Waiting for client connection.
-    while (client == null) {
-      debugPrint("[SimpleWifiChannel] Waiting for client to connect...");
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Send socket information to client.
+      debugPrint("[SimpleWifiChannel] Sending Channel Metadata to client..");
+      await channel.sendChannelMetadata(
+          ChannelMetadata(super.identifier, address.address, ssid, '', port));
+
+      // Waiting for client connection.
+      while (client == null) {
+
+        debugPrint("[SimpleWifiChannel] Waiting for client to connect...");
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      // Listen for acknowledgements
+      client!.listen((data) {
+        VeniceMessage ackMsg;
+        if (!useProtoBuf) {
+          final jsonString = String.fromCharCodes(
+              data); // Decode bytes to string
+          final jsonData = jsonDecode(jsonString); // Convert string to JSON
+          ackMsg = VeniceMessage.fromJson(jsonData);
+        }
+        else {
+          final msgProto = VeniceMessageProto.fromBuffer(data);
+          ackMsg = VeniceMessage.fromProtoBuf(msgProto);
+        }
+        on(DataChannelEvent.acknowledgment, ackMsg.messageId);
+      });
     }
-
-    // Listen for acknowledgements
-    client!.listen((data) {
-      final jsonString = String.fromCharCodes(data); // Decode bytes to string
-      final jsonData = jsonDecode(jsonString); // Convert string to JSON
-      VeniceMessage ackMsg;
-      ackMsg = VeniceMessage.fromJson(jsonData);
-      on(DataChannelEvent.acknowledgment, ackMsg.messageId);
-    });
   }
 
   @override
