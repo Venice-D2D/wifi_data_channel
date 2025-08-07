@@ -2,6 +2,7 @@ library wifi_data_channel;
 
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
 import 'package:venice_core/channels/abstractions/bootstrap_channel.dart';
@@ -99,7 +100,17 @@ class SimpleWifiDataChannel extends DataChannel {
         debugPrint("==> MESSAGE #$msgId COMPLETE");
         on(DataChannelEvent.data, msg);
         debugPrint("==> Sending acknowledgement");
-        client!.write(VeniceMessage.acknowledgement(msgId).toJson());
+        if (!useProtoBuf){
+          debugPrint("==> Sending JSON Ack");
+          client!.write(VeniceMessage.acknowledgement(msgId).toJson());
+        }
+        else {
+          debugPrint("==> Sending ProtoBuf Ack");
+          VeniceMessageProto messageProto = VeniceMessage.acknowledgement(msgId).toProtoBuf();
+          Uint8List data = messageProto.writeToBuffer();
+          client!.add(data);
+          await client!.flush();
+        }
         await client!.flush();
         debugPrint("==> Acknowledgement sent");
       } catch (e) {
@@ -169,13 +180,17 @@ class SimpleWifiDataChannel extends DataChannel {
       }
 
       // Listen for acknowledgements
-      client!.listen((data) {
+    //lient..transform(utf8.decoder).ransform(const LineSplitter());
+     client!.listen((data) {
         VeniceMessage ackMsg;
         if (!useProtoBuf) {
           final jsonString = String.fromCharCodes(
               data); // Decode bytes to string
-          final jsonData = jsonDecode(jsonString); // Convert string to JSON
-          ackMsg = VeniceMessage.fromJson(jsonData);
+          //final jsonData = jsonDecode(jsonString); // Convert string to JSON
+          debugPrint("[SimpleWifiChannel] JSON String Received: "+jsonString);
+          debugPrint("[SimpleWifiChannel] Decoding JSON message");
+          ackMsg = VeniceMessage.fromJson(jsonString);
+
         }
         else {
           final msgProto = VeniceMessageProto.fromBuffer(data);
@@ -188,7 +203,32 @@ class SimpleWifiDataChannel extends DataChannel {
 
   @override
   Future<void> sendMessage(VeniceMessage chunk) async {
-    client!.write(chunk.toBytes());
+    int length = -1;
+    BytesBuilder packet = BytesBuilder();
+    Uint8List data;
+
+    if (useProtoBuf) {
+      VeniceMessageProto chunkProto = chunk.toProtoBuf();
+      data = chunkProto.writeToBuffer();
+      length = data.length;
+    }
+    else{
+      //client!.write(chunk.toBytes());
+      String chunkJson = chunk.toJson();
+      length= chunkJson.length;
+      data = utf8.encode(chunkJson);
+    }
+
+    packet.addByte((length >> 24) & 0xFF);
+    packet.addByte((length >> 16) & 0xFF);
+    packet.addByte((length >> 8) & 0xFF);
+    packet.addByte(length & 0xFF);
+    packet.add(data);
+
+    debugPrint("[SimpleWifiChannel] Sending data: "+data.toString());
+    debugPrint("[SimpleWifiChannel] Data length: "+length.toString());
+    client!.add(packet.toBytes());
+    await client!.flush();
   }
 
   @override
