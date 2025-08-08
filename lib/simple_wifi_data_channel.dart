@@ -159,7 +159,7 @@ class SimpleWifiDataChannel extends DataChannel {
       debugPrint("[SimpleWifiChannel]     IP: $ip");
       debugPrint("[SimpleWifiChannel]     SSID: $ssid");
 
-      final server = await ServerSocket.bind(address, port);
+      final server = await ServerSocket.bind(address, 0);
       server.listen((clientSocket) {
         debugPrint(
             '[SimpleWifiChannel] Connection from ${clientSocket.remoteAddress
@@ -170,7 +170,7 @@ class SimpleWifiDataChannel extends DataChannel {
       // Send socket information to client.
       debugPrint("[SimpleWifiChannel] Sending Channel Metadata to client..");
       await channel.sendChannelMetadata(
-          ChannelMetadata(super.identifier, address.address, ssid, '', port));
+          ChannelMetadata(super.identifier, address.address, ssid, '', server.port));
 
       // Waiting for client connection.
       while (client == null) {
