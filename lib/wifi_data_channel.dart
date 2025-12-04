@@ -170,4 +170,9 @@ class WifiDataChannel extends DataChannel {
       client!.close();
     }
   }
+
+  @override
+  Future<void> dealWithClientConnections() async {
+    return;
+  }
 }
