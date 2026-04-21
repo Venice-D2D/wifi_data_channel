@@ -138,7 +138,7 @@ class WifiDataChannel extends DataChannel {
 
     // Send socket information to client.
     await channel.sendChannelMetadata(
-        ChannelMetadata(super.identifier, address.address, ssid, key));
+        ChannelMetadata(super.identifier, address.address, ssid, key, port));
 
     // Waiting for client connection.
     while (client == null) {
@@ -169,5 +169,10 @@ class WifiDataChannel extends DataChannel {
     if (client != null) {
       client!.close();
     }
+  }
+
+  @override
+  Future<void> dealWithClientConnections() async {
+    return;
   }
 }
