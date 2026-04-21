@@ -1,6 +1,7 @@
 library wifi_data_channel;
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:venice_core/channels/abstractions/bootstrap_channel.dart';
 import 'package:venice_core/channels/abstractions/data_channel.dart';
